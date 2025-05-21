@@ -83,3 +83,14 @@ FOREIGN KEY (responsable_id) REFERENCES responsables(id),
 FOREIGN KEY (sistema_fuente_id) REFERENCES sistemas_fuente(id)
 );
 
+--- Crear tabla registros_diarios_indicadores
+CREATE TABLE registros_diarios_indicadores (id INT IDENTITY(1,1) PRIMARY KEY,sucursal_id INT NOT NULL,indicador_id INT NOT NULL,valor_meta DECIMAL(9,2),valor_real DECIMAL(9,2) NOT NULL,fecha_reporte DATETIME NOT NULL,FOREIGN KEY (sucursal_id) REFERENCES sucursales(id),FOREIGN KEY (indicador_id) REFERENCES indicadores(id));
+
+--- CREAR TABLA indicadores_horario
+
+CREATE TABLE indicadores_horario (id INT IDENTITY(1,1) PRIMARY KEY,horario_inicio_id INT NOT NULL,horario_fin_id INT NOT NULL,indicador_id INT NOT NULL,fecha_reporte DATETIME DEFAULT GETDATE() NOT NULL,valor DECIMAL(9,2) NOT NULL,FOREIGN KEY (horario_inicio_id) REFERENCES horarios(id),FOREIGN KEY (horario_fin_id) REFERENCES horarios(id),FOREIGN KEY (indicador_id) REFERENCES indicadores(id));
+
+
+---- Crear tabla desviaciones_indicador
+
+CREATE TABLE desviaciones_indicador (id INT IDENTITY(1,1) PRIMARY KEY,registro_diario_indicador_id INT NOT NULL,diferencia_absoluta DECIMAL(9,2)  NOT NULL,diferencia_porcentual DECIMAL(9,2) NOT NULL,clasificacion VARCHAR (100) NOT NULL,FOREIGN KEY (registro_diario_indicador_id) REFERENCES registros_diarios_indicadores(id));
