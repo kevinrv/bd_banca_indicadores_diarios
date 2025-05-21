@@ -17,4 +17,28 @@ estado VARCHAR(25) NOT NULL,
 telefono VARCHAR(25) NULL
 );
 
-SELECT*FROM sucursales;
+CREATE TABLE horas (
+id INT IDENTITY(1,1) PRIMARY KEY,
+dia VARCHAR(25) NOT NULL,
+hora_inicio TIME NOT NULL,
+hora_fin TIME NOT NULL
+);
+
+CREATE TABLE responsables (
+id INT IDENTITY(1,1) PRIMARY KEY,
+cod_empleado CHAR(6) UNIQUE NOT NULL,
+cargo VARCHAR(100) NOT NULL,
+unidad VARCHAR(100) NOT NULL,
+fecha_inicio DATE NOT NULL,
+fecha_fin DATE NULL
+);
+
+CREATE TABLE sistemas_fuente (
+id INT IDENTITY(1,1) PRIMARY KEY,
+responsable_id INT,
+nombre VARCHAR(155) NOT NULL,
+descripcion VARCHAR(MAX) NULL,
+version VARCHAR(20) NULL,
+area Varchar(100) NOT NULL,
+CONSTRAINT fk_sistema_fuente_responsable FOREIGN KEY (responsable_id) REFERENCES responsables(id)
+);
