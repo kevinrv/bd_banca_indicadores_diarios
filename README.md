@@ -104,6 +104,9 @@ Cantidad de operaciones realizadas por canal digital.
 
 ## Diagra entidad relación
 ![image](https://github.com/user-attachments/assets/0fe023d5-69ca-4631-a745-19e503f5bf46)
-##Diseño lógico
+## Diseño lógico
 ![bd_banca_indicadores_diarios_1](https://github.com/user-attachments/assets/2d75ee8a-fdf5-456d-95bb-286df7c51268)
+## Modelo Físico
+![image](https://github.com/user-attachments/assets/d1b5b973-1a50-4bd0-9ab2-f06adaac1201)
+
 
