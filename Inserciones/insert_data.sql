@@ -2,8 +2,36 @@ USE bd_banca_indicadores_diarios;
 GO
 
 --Insercion de datos
-
-SELECT*FROM responsables;
+--- Responsables
+SELECT * FROM responsables;
 
 INSERT INTO responsables (cod_empleado,cargo,unidad,fecha_inicio,fecha_fin)
 VALUES('E001', 'Data Analyst','Ingeniería', '2025-05-25',NULL);
+
+--- Sistemas fuente
+
+SELECT*FROM sistemas_fuente;
+
+INSERT INTO sistemas_fuente (responsable_id, nombre, descripcion,version, area) 
+VALUES ('2','Sistema de transacciones', 'Registro de transacciones diarias', '1.0', 'Ventas');
+
+---Eliminar datos Tabla
+DELETE FROM sistemas_fuente;
+
+---Resetear el ID de una tabla
+DBCC CHECKIDENT ('sistemas_fuente', RESEED, 0);
+
+
+---Indicadores
+
+SELECT*FROM indicadores;
+DELETE FROM indicadores;
+INSERT INTO indicadores (responsable_id, sistema_fuente_id,nombre, descripcion, unidad_medida, categoria)
+VALUES (2,1,'Transacciones diarias','Número de transacciones diarias','cantidad','Transacciones bancarias');
+
+
+--- horas 
+SELECT*FROM horas;
+
+UPDATE horas SET dia = 'sabado' WHERE id > 121;
+INSERT INTO horas (dia, hora_inicio, hora_fin) VALUES ('Lunes','00:00:00','01:00:00');
