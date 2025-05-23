@@ -32,6 +32,25 @@ VALUES (2,1,'Transacciones diarias','Número de transacciones diarias','cantidad'
 
 --- horas 
 SELECT*FROM horas;
+DELETE FROM horas;
 
-UPDATE horas SET dia = 'sabado' WHERE id > 121;
+DBCC CHECKIDENT ('horas', RESEED, 0);
+UPDATE horas SET dia = 'sabado' WHERE id > 120;
 INSERT INTO horas (dia, hora_inicio, hora_fin) VALUES ('Lunes','00:00:00','01:00:00');
+
+SELECT HOUR(GETDATE());
+--- Horarios
+SELECT*FROM sucursales;
+SELECT*FROM horarios;
+
+INSERT INTO horarios
+SELECT 
+	3 AS 'sucursal_id',
+	id AS 'hora_id',
+	'activo' AS 'estado', 
+	GETDATE() AS 'fecha_registro'
+FROM horas
+WHERE 
+	dia NOT IN ('sabado') AND 
+	hora_inicio >= '09:00:00' AND 
+	hora_inicio < '18:00:00';
