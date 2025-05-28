@@ -89,4 +89,55 @@ WHERE cargo='Analista' AND unidad = 'Operaciones' AND YEAR(fecha_inicio) = '2022
 	unidad_medida like ('%porcentaje%') and
 	(categoria = 'Eficiencia' or categoria = 'Riesgo');
 -- Alejandro
-	SELECT *	FROM indicadores	WHERE 	unidad_medida = 'Porcentaje' 	AND categoria IN ('Eficiencia', 'Riesgo')-- renat 	SELECT *	FROM indicadores	WHERE unidad_medida = 'porcentaje' 	AND (categoria = 'Eficiencia' OR categoria = 'Riesgo');-- EduardhoSELECTnombre,descripcion,unidad_medida,categoriaFROM indicadoresWHERE unidad_medida = 'Porcentaje' AND (categoria = 'Eficiencia' OR categoria = 'Riesgo');--- Dianaselect*from indicadoreswhere unidad_medida='porcentaje' AND(categoria='Eficiencia' or categoria='Riesgo');--- Encontrar valores que estan en una lista--- Seleccionar los responsables que se encuentren en las siguientes unidades:--- 'Operaciones', 'Riesgos', 'TI' y 'Finanzas'SELECT*FROM responsablesWHERE unidad IN ('Operaciones', 'Riesgos', 'TI' , 'Finanzas');--- Seleccionar los responsables que NO se encuentren en las siguientes unidades:--- 'Operaciones', 'Riesgos', 'TI' y 'Finanzas'SELECT*FROM responsablesWHERE unidad NOT IN ('Operaciones', 'Riesgos', 'TI' , 'Finanzas');--Between --- Seleciona los responsables que ingresaron entre 2022 y 2023SELECT *FROM responsablesWHERE YEAR(fecha_inicio) BETWEEN '2022' AND  '2023';SELECT *FROM responsablesWHERE YEAR(fecha_inicio) >= '2022' AND YEAR(fecha_inicio)<= '2023';
+	SELECT *
+	FROM indicadores
+	WHERE 
+	unidad_medida = 'Porcentaje' 
+	AND categoria IN ('Eficiencia', 'Riesgo')
+-- renat 
+	SELECT *
+	FROM indicadores
+	WHERE unidad_medida = 'porcentaje' 
+	AND (categoria = 'Eficiencia' OR categoria = 'Riesgo');
+-- Eduardho
+SELECT
+nombre,
+descripcion,
+unidad_medida,
+categoria
+FROM indicadores
+WHERE unidad_medida = 'Porcentaje' AND (categoria = 'Eficiencia' OR categoria = 'Riesgo');
+
+--- Diana
+
+select*from indicadores
+where 
+unidad_medida='porcentaje' AND
+(categoria='Eficiencia' or categoria='Riesgo');
+
+--- Encontrar valores que estan en una lista
+
+--- Seleccionar los responsables que se encuentren en las siguientes unidades:
+--- 'Operaciones', 'Riesgos', 'TI' y 'Finanzas'
+SELECT*FROM responsables
+WHERE unidad IN ('Operaciones', 'Riesgos', 'TI' , 'Finanzas');
+
+--- Seleccionar los responsables que NO se encuentren en las siguientes unidades:
+--- 'Operaciones', 'Riesgos', 'TI' y 'Finanzas'
+SELECT*FROM responsables
+WHERE unidad NOT IN ('Operaciones', 'Riesgos', 'TI' , 'Finanzas');
+
+--Between 
+
+--- Seleciona los responsables que ingresaron entre 2022 y 2023
+
+SELECT *
+FROM responsables
+WHERE YEAR(fecha_inicio) BETWEEN '2022' AND  '2023';
+
+SELECT *
+FROM responsables
+WHERE YEAR(fecha_inicio) >= '2022' AND YEAR(fecha_inicio)<= '2023';
+
+SELECT*FROM indicadores_horario;
+SELECT*FROM registros_diarios_indicadores;
