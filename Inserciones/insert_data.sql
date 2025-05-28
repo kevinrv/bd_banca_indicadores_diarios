@@ -88,3 +88,40 @@ WHERE
 SET @COUNTER=@COUNTER+1;
 
 END
+
+--- Indicadores Horarios
+SELECT*FROM indicadores_horario;
+
+DECLARE @Counter INT
+SET @Counter = 0
+
+WHILE @Counter < ROUND(RAND()*5000,0)
+BEGIN
+INSERT INTO indicadores_horario(horario_inicio_id, horario_fin_id, indicador_id, fecha_reporte, valor)
+SELECT 
+  hi.id AS 'horario_inicio_id',
+  hi.id + ROUND(RAND()*8,0)+1 AS 'horario_fin_id',
+  i.id AS 'indicador_id',
+  DATEADD(DAY, -ROUND(RAND() * 780,0), GETDATE()) AS 'fecha_reporte', -- Fecha de reporte en los últimos 2 años
+  CASE 
+	WHEN i.unidad_medida ='Índice' THEN ROUND(RAND()*4,1)+1
+	WHEN i.unidad_medida ='Monto (S/.)' THEN ROUND(RAND()*500000,2)+50000
+	WHEN i.unidad_medida ='Número' THEN ROUND(RAND()*5000,0)+1000
+	WHEN i.unidad_medida ='Porcentaje' THEN ROUND(RAND()*150,2)
+	WHEN i.unidad_medida ='Ratio' THEN ROUND(RAND(),3)
+	WHEN i.unidad_medida ='Segundos' THEN ROUND(RAND()*300,1)+30
+  ELSE '0' END AS 'valor'
+FROM indicadores i
+CROSS JOIN horarios hi 
+WHERE hi.estado ='activo'
+ORDER BY NEWID()
+OFFSET 0 ROWS
+FETCH NEXT 1 ROWS ONLY;
+    SET @Counter = @Counter + 1
+END;
+
+SELECT * FROM indicadores WHERE unidad_medida='Porcentaje';
+
+SELECT RAND();
+
+--- Registros Diarios Indicadores
