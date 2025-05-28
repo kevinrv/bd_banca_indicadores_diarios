@@ -141,3 +141,34 @@ WHERE YEAR(fecha_inicio) >= '2022' AND YEAR(fecha_inicio)<= '2023';
 
 SELECT*FROM indicadores_horario;
 SELECT*FROM registros_diarios_indicadores;
+
+-- INNER JOIN
+
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM responsables r
+INNER JOIN sistemas_fuente sf ON r.id=sf.responsable_id;
+
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM responsables r, sistemas_fuente sf
+WHERE r.id=sf.responsable_id;
+
+--- LEFT JOIN
+
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM responsables r
+LEFT JOIN sistemas_fuente sf ON r.id=sf.responsable_id
+-- RIGTH JOIN
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM sistemas_fuente sf
+RIGHT JOIN  responsables r ON r.id=sf.responsable_id;
+
+
+--- FULL JOIN
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM sistemas_fuente sf
+FULL JOIN  responsables r ON r.id=sf.responsable_id;
+
+--- CROSS JOIN
+SELECT r.cod_empleado, r.cargo, sf.*
+FROM sistemas_fuente sf
+CROSS JOIN  responsables r;

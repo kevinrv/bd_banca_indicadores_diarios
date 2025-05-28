@@ -12,21 +12,63 @@ GO
  WHERE estado='activo'
 
 /*
+Obtener los nombres de todos los sistemas fuente registrados junto con el codigo 
+de empleado del responsable asignado.*/
 
-Obtener los nombres de todos los sistemas fuente registrados junto con el nombre del responsable asignado.*/
+SELECT 
+	sf.nombre,
+	r.cod_empleado
+FROM sistemas_fuente sf
+	INNER JOIN responsables r ON sf.responsable_id=r.id;
 
 /*
 
-Mostrar los indicadores registrados en el sistema, incluyendo su nombre, unidad de medida y categoría.
+Mostrar los indicadores registrados en el sistema, incluyendo su nombre, unidad de medida y categoría.*/
 
-Listar todos los responsables cuyo contrato comenzó antes del 2023.
+SELECT nombre, unidad_medida,categoria
+FROM indicadores;
 
-Mostrar las horas registradas con su respectivo día, hora de inicio y hora de fin ordenadas por hora de inicio.
+/*
+
+Listar todos los responsables cuyo contrato comenzó antes del 2023.*/
+SELECT*FROM responsables
+WHERE YEAR(fecha_inicio)<'2023';
+
+/*
+
+Mostrar las horas registradas con su respectivo día, hora de inicio y hora de fin ordenadas por hora de inicio.*/
+
+SELECT dia, hora_inicio, hora_fin
+FROM horas
+ORDER BY hora_inicio;
+
+/*
 
 🔹 Nivel Intermedio
-Listar todos los indicadores que se miden en porcentaje y que pertenecen al área de créditos.
+Listar todos los indicadores que se miden en porcentaje y que pertenecen al área de Operaciones.*/
 
-Mostrar los 10 últimos registros diarios de indicadores reportados en una sucursal específica.
+SELECT i.*, sf.area
+FROM indicadores i
+INNER JOIN sistemas_fuente sf ON sf.id=i.sistema_fuente_id
+WHERE 
+	i.unidad_medida = 'porcentaje' AND 
+	sf.area = 'Operaciones';
+
+/*
+
+Mostrar los 10 últimos registros diarios de indicadores reportados en una sucursal específica.*/
+
+SELECT TOP 10
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'indicador',
+	rd.fecha_reporte
+FROM sucursales s
+	INNER JOIN registros_diarios_indicadores rd ON rd.sucursal_id=s.id
+	INNER JOIN indicadores i ON i.id = rd.indicador_id
+WHERE s.id=1
+ORDER BY fecha_reporte DESC;
+
+/*
 
 Mostrar cuántos indicadores tiene registrados cada sistema fuente.
 
