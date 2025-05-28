@@ -43,9 +43,18 @@ SELECT HOUR(GETDATE());
 SELECT*FROM sucursales;
 SELECT*FROM horarios;
 
+
+
+--- Insertar horarios de L-V para todas las usucrsales
+DECLARE @COUNTER INT;
+
+SET @COUNTER=1
+
+WHILE @COUNTER <= 20
+BEGIN
 INSERT INTO horarios
 SELECT 
-	3 AS 'sucursal_id',
+	@COUNTER AS 'sucursal_id',
 	id AS 'hora_id',
 	'activo' AS 'estado', 
 	GETDATE() AS 'fecha_registro'
@@ -54,3 +63,28 @@ WHERE
 	dia NOT IN ('sabado') AND 
 	hora_inicio >= '09:00:00' AND 
 	hora_inicio < '18:00:00';
+SET @COUNTER=@COUNTER+1;
+
+END
+
+--- Insertar horarios de S para todas las sucursales
+DECLARE @COUNTER INT;
+
+SET @COUNTER=1
+
+WHILE @COUNTER <= 20
+BEGIN
+INSERT INTO horarios
+SELECT 
+	@COUNTER AS 'sucursal_id',
+	id AS 'hora_id',
+	'activo' AS 'estado', 
+	GETDATE() AS 'fecha_registro'
+FROM horas
+WHERE 
+	dia IN ('sabado') AND 
+	hora_inicio >= '09:00:00' AND 
+	hora_inicio < '13:00:00';
+SET @COUNTER=@COUNTER+1;
+
+END
