@@ -114,7 +114,48 @@ GROUP BY i.nombre,i.unidad_medida;
 SELECT*FROM indicadores;
 /*
 
-Listar los indicadores con desviaciones absolutas mayores a 1000 soles, ordenados de mayor a menor.
+Listar los indicadores con desviaciones absolutas mayores a 1000 soles, ordenados de mayor a menor.*/
+--- Insertando dato en la tabla desviaciones
+
+SELECT*FROM desviaciones_indicador;
+
+INSERT INTO desviaciones_indicador
+SELECT
+	id AS 'registro_diario_indicador',
+	ABS(valor_real-valor_meta) AS 'diferencia_absoluta',
+	(ABS(valor_real-valor_meta)/valor_meta)*100 AS 'diferencia_porcentual',
+	CASE 
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 30 THEN 'Crítica'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 20 THEN 'Alta'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 10 THEN 'Moderada'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100> 0 THEN 'Baja'
+	ELSE 'Sin Desviación' END AS 'clasificacion'
+FROM registros_diarios_indicadores;
+
+-- No puede haber valores meta iguales a 0
+UPDATE registros_diarios_indicadores SET valor_meta = 0.5
+WHERE valor_meta=0;
+
+SELECT distinct unidad_medida
+FROM indicadores;
+--Solución ejercicio:
+
+SELECT*FROM registros_diarios_indicadores;
+
+SELECT 
+	rdi.fecha_reporte,
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	di.diferencia_absoluta
+FROM desviaciones_indicador di
+	INNER JOIN registros_diarios_indicadores rdi ON rdi.id=di.registro_diario_indicador_id
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	INNER JOIN sucursales s ON s.id=rdi.sucursal_id
+WHERE 
+	di.diferencia_absoluta>'1000' AND
+	i.unidad_medida='Monto (S/.)'
+ORDER BY  s.nombre,di.diferencia_absoluta DESC;
+/*
 
 🔹 Nivel Avanzado
 Calcular el porcentaje de cumplimiento (valor_real / valor_meta * 100) de todos los indicadores reportados ayer por cada sucursal.
