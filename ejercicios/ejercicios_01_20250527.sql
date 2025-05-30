@@ -70,9 +70,49 @@ ORDER BY fecha_reporte DESC;
 
 /*
 
-Mostrar cuántos indicadores tiene registrados cada sistema fuente.
+Mostrar cuántos indicadores tiene registrados cada sistema fuente.*/
 
-Obtener el promedio del valor real reportado por indicador en los últimos 7 días.
+SELECT 
+	sf.nombre 'Sistema_Fuente',
+	COUNT(i.id) 'num_indicadores'
+FROM sistemas_fuente AS sf 
+INNER JOIN indicadores AS i ON i.sistema_fuente_id=sf.id
+GROUP BY sf.nombre;
+
+
+SELECT 
+	sistemas_fuente.nombre AS 'Sistema_Fuente',
+	COUNT(indicadores.id) AS 'num_indicadores'
+FROM sistemas_fuente 
+INNER JOIN indicadores  ON indicadores.sistema_fuente_id=sistemas_fuente.id
+GROUP BY sistemas_fuente.nombre;
+
+/*
+
+Obtener el promedio del valor real reportado por indicador en los últimos 7 días.*/
+
+-- DATEDIFF
+SELECT
+	i.nombre AS 'Indicador',
+	i.unidad_medida,
+	AVG(rdi.valor_real) AS 'avg_valor_real'
+FROM indicadores i
+INNER JOIN registros_diarios_indicadores rdi ON rdi.indicador_id=i.id
+WHERE DATEDIFF(DAY,rdi.fecha_reporte,GETDATE())<=7
+GROUP BY i.nombre,i.unidad_medida;
+
+-- DATEADD
+SELECT
+	i.nombre AS 'Indicador',
+	i.unidad_medida,
+	AVG(rdi.valor_real) AS 'avg_valor_real'
+FROM indicadores i
+INNER JOIN registros_diarios_indicadores rdi ON rdi.indicador_id=i.id
+WHERE DATEADD(DAY,-7,GETDATE())<=rdi.fecha_reporte
+GROUP BY i.nombre,i.unidad_medida;
+
+SELECT*FROM indicadores;
+/*
 
 Listar los indicadores con desviaciones absolutas mayores a 1000 soles, ordenados de mayor a menor.
 
