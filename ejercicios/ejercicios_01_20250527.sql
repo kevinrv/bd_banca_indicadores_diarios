@@ -158,11 +158,38 @@ ORDER BY  s.nombre,di.diferencia_absoluta DESC;
 /*
 
 🔹 Nivel Avanzado
-Calcular el porcentaje de cumplimiento (valor_real / valor_meta * 100) de todos los indicadores reportados ayer por cada sucursal.
+Calcular el porcentaje de cumplimiento (valor_real / valor_meta * 100) de todos los indicadores reportados 
+ayer por cada sucursal.*/
 
-Mostrar un ranking de sucursales según el total de indicadores reportados en el último mes.
+SELECT	s.nombre AS 'Sucursal',	i.nombre AS 'Indicador',	valor_meta,	valor_real,	CONCAT(ROUND((valor_real / valor_meta * 100),2),' %') AS 'porcentaje_cumpliento',	fecha_reporteFROM registros_diarios_indicadores rdi	INNER JOIN sucursales AS s ON rdi.sucursal_id = s.id	INNER JOIN indicadores as i ON rdi.indicador_id = i.idWHERE DATEDIFF(DAY,fecha_reporte,GETDATE())=1ORDER BY s.nombre, i.nombre;
 
-Detectar los indicadores cuyo valor real fue menor al valor meta en más del 50% de los días del mes actual.
+/*
+
+
+Mostrar un ranking de sucursales según el total de indicadores reportados en el último mes.*/
+
+SELECT    s.nombre AS 'Sucursal',    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM    registros_diarios_indicadores rdiINNER JOIN    sucursales s ON rdi.sucursal_id = s.idWHERE    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())GROUP BY    s.nombre
+ORDER BY 2 DESC;
+
+SELECT s.nombre AS 'Sucursal',COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM registros_diarios_indicadores rdi	INNER JOIN sucursales s ON rdi.sucursal_id = s.id	WHERE rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())GROUP BY s.nombreORDER BY Total_Indicadores_Reportados DESC;
+/*
+
+Detectar los indicadores cuyo valor real fue menor al valor meta en más del 50% de los días del mes actual.*/
+
+SELECT 
+	s.nombre AS 'Sucursal',	i.nombre AS 'Indicador',
+	rdi.valor_real,
+	rdi.valor_meta,
+	rdi.fecha_reporte,
+	100-((rdi.valor_real/rdi.valor_meta)*100) AS 'Menor que el valor meta en un ..%'
+FROM registros_diarios_indicadores rdi	INNER JOIN sucursales s ON rdi.sucursal_id = s.id	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+WHERE 
+	MONTH(GETDATE())=MONTH(rdi.fecha_reporte) AND 
+	YEAR(GETDATE())=YEAR(rdi.fecha_reporte) AND 
+	100-((rdi.valor_real/rdi.valor_meta)*100)>50
+ORDER BY 1,2;
+
+/*
 
 Listar todos los indicadores cuyo ratio de desviación porcentual promedio supere el 10%.
 
