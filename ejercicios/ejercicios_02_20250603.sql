@@ -109,7 +109,16 @@ Crear una función de tabla que devuelva los registros diarios de indicadores co
 CREATE FUNCTION fn_kv_desviaciones_altas_ultimo_mes()RETURNS TABLEASRETURN(    SELECT         s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal,        di.diferencia_absoluta AS DifAbsoluta,        di.diferencia_porcentual AS DifPorcentual,        di.clasificacion AS Clasificacion    FROM registros_diarios_indicadores rdi    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    INNER JOIN indicadores i ON i.id = rdi.indicador_id    WHERE di.clasificacion = 'Alta'      AND CAST(rdi.fecha_reporte AS DATE) >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE)));SELECT * FROM dbo.fn_kv_desviaciones_altas_ultimo_mes();
 /*
 
-Crear una función de tabla que muestre el historial de indicadores de un sistema fuente específico.
+Crear una función de tabla que muestre el historial de indicadores de un sistema fuente específico.*/
+
+
+CREATE FUNCTION fn_kv_historial_indicadores_por_sistema_fuente(@sistema_fuente_id INT)RETURNS TABLEASRETURN(    SELECT         sf.nombre AS SistemaFuente,        s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal    FROM sistemas_fuente sf    INNER JOIN indicadores i ON i.sistema_fuente_id = sf.id    INNER JOIN registros_diarios_indicadores rdi ON rdi.indicador_id = i.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    WHERE sf.id = @sistema_fuente_id);SELECT * FROM dbo.fn_kv_historial_indicadores_por_sistema_fuente(3);
+
+
+
+/*
+
+
 
 
 ⚙️ PROCEDIMIENTOS ALMACENADOS – Ejercicios Propuestos
