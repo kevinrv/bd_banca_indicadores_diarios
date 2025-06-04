@@ -142,6 +142,7 @@ FROM indicadores;
 
 SELECT*FROM registros_diarios_indicadores;
 
+
 SELECT 
 	rdi.fecha_reporte,
 	s.nombre AS 'Sucursal',
@@ -155,6 +156,24 @@ WHERE
 	di.diferencia_absoluta>'1000' AND
 	i.unidad_medida='Monto (S/.)'
 ORDER BY  s.nombre,di.diferencia_absoluta DESC;
+--Generamos una vista
+CREATE VIEW vw_kv_indicadores_abs_mayor_100 AS
+SELECT 
+	rdi.fecha_reporte,
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	di.diferencia_absoluta
+FROM desviaciones_indicador di
+	INNER JOIN registros_diarios_indicadores rdi ON rdi.id=di.registro_diario_indicador_id
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	INNER JOIN sucursales s ON s.id=rdi.sucursal_id
+WHERE 
+	di.diferencia_absoluta>'1000' AND
+	i.unidad_medida='Monto (S/.)';
+
+SELECT*FROM vw_kv_indicadores_abs_mayor_100
+ORDER BY diferencia_absoluta DESC;
+
 /*
 
 🔹 Nivel Avanzado
@@ -172,6 +191,12 @@ SELECT    s.nombre AS 'Sucursal',    COUNT(rdi.id) AS 'Total_Indicadores_Repor
 ORDER BY 2 DESC;
 
 SELECT s.nombre AS 'Sucursal',COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM registros_diarios_indicadores rdi	INNER JOIN sucursales s ON rdi.sucursal_id = s.id	WHERE rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())GROUP BY s.nombreORDER BY Total_Indicadores_Reportados DESC;
+
+--Mostrar un ranking de sucursales que tenga  reportados mas de 20 indicadores en el último mes.*/
+SELECT    s.nombre AS 'Sucursal',    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM    registros_diarios_indicadores rdiINNER JOIN    sucursales s ON rdi.sucursal_id = s.idWHERE    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE()) GROUP BY    s.nombre
+HAVING COUNT(rdi.id)>20
+ORDER BY 2 DESC;
+
 /*
 
 Detectar los indicadores cuyo valor real fue menor al valor meta en más del 50% de los días del mes actual.*/
@@ -191,9 +216,44 @@ ORDER BY 1,2;
 
 /*
 
-Listar todos los indicadores cuyo ratio de desviación porcentual promedio supere el 10%.
+Listar todos los indicadores cuyo ratio de desviación porcentual promedio supere el 10%.(Tarea)
 
-Obtener el tiempo total (en segundos) que transcurre entre cada horario de inicio y fin para los registros de indicadores_horario, agrupado por indicador.
+
+Obtener el tiempo total (en segundos) que transcurre entre cada horario de inicio y fin para los
+registros de indicadores_horario, agrupado por indicador.
+*/
+
+SELECT*FROM horas;
+SELECT*FROM horarios;
+
+SELECT
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	hi.hora_id 'i',
+	hf.hora_id 'f',
+	hri.hora_inicio 'hi',
+	hrf.hora_fin 'hf',
+	CASE
+	 WHEN DATEDIFF(HOUR,hri.hora_inicio,hrf.hora_fin)>0 THEN (DATEDIFF(HOUR,hri.hora_inicio,hrf.hora_fin))*60
+	 ELSE (DATEDIFF(HOUR,hri.hora_inicio,hrf.hora_fin)+24)*60
+	 END AS 'tiempo_en_segundos'
+FROM indicadores i
+	INNER JOIN indicadores_horario ih ON ih.indicador_id=i.id
+	INNER JOIN horarios hi ON hi.id=ih.horario_inicio_id
+	INNER JOIN horas hri ON hri.id=hi.hora_id
+	INNER JOIN horarios hf ON hf.id=ih.horario_fin_id
+	INNER JOIN horas hrf ON hrf.id=hf.hora_id
+	INNER JOIN sucursales s ON s.id=hi.sucursal_id AND s.id=hf.sucursal_id 
+GROUP BY s.nombre, i.nombre,hrf.hora_fin,hri.hora_inicio,hi.hora_id,
+	hf.hora_id
+
+
+
+
+/*
+
+
+
 
 🔹 Nivel Experto / Análisis Gerencial
 Elaborar un reporte que muestre por cada sucursal:
@@ -208,6 +268,48 @@ Detectar los sistemas fuente cuyo responsable ha cambiado en el último año.
 
 Calcular un "Índice de consistencia" por indicador, que mida la diferencia promedio diaria entre el valor real y el valor meta.
 
-Identificar los 5 indicadores más críticos (con mayor cantidad de desviaciones severas en el último mes).
+Identificar los 5 indicadores más críticos (con mayor cantidad de desviaciones críticas en el último mes).*/
+
+SELECT  TOP 5
+	i.nombre AS 'Indicador',
+	COUNT(di.registro_diario_indicador_id) AS 'num_indicadores'
+FROM registros_diarios_indicadores rdi	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+	INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id=rdi.id
+WHERE 
+	di.clasificacion='Crítica' AND
+	MONTH(GETDATE())=MONTH(rdi.fecha_reporte) AND 
+	YEAR(GETDATE())=YEAR(rdi.fecha_reporte) 
+GROUP BY i.nombre
+ORDER BY 2 DESC;
+
+-- Ranking dinamico
+SELECT 
+	i.nombre AS 'Indicador',
+	COUNT(di.registro_diario_indicador_id) AS 'num_indicadores'
+	INTO #t01
+FROM registros_diarios_indicadores rdi	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+	INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id=rdi.id
+WHERE 
+	di.clasificacion='Crítica' AND
+	MONTH(GETDATE())=MONTH(rdi.fecha_reporte) AND 
+	YEAR(GETDATE())=YEAR(rdi.fecha_reporte)
+GROUP BY i.nombre
+ORDER BY 2 DESC;
+
+SELECT 
+	Indicador,
+	num_indicadores
+FROM #t01
+WHERE num_indicadores IN (SELECT TOP 5 num_indicadores FROM #t01 ORDER BY num_indicadores DESC)
+ORDER BY 2 DESC;
+
+DROP TABLE #t01
+
+
+
+/*
+
+
+
 
 Generar una tabla resumen que indique, por día, cuántos indicadores fueron registrados por franja horaria (mañana, tarde, noche).*/
