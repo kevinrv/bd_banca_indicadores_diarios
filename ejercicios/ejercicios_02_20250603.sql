@@ -98,12 +98,19 @@ FROM registros_diarios_indicadores rdi;
 /*
 
 Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como 
-“Alta” en el último mes.*/
+“Alta” en el último mes(mes actual).*/
+CREATE FUNCTION fn_kv_desviaciones_altas_mes_actual()RETURNS TABLEASRETURN(    SELECT         s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal,        di.diferencia_absoluta AS DifAbsoluta,        di.diferencia_porcentual AS DifPorcentual,        di.clasificacion AS Clasificacion    FROM registros_diarios_indicadores rdi    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    INNER JOIN indicadores i ON i.id = rdi.indicador_id    WHERE di.clasificacion = 'Alta'      AND YEAR(rdi.fecha_reporte) = YEAR(GETDATE()) AND MONTH(rdi.fecha_reporte) = MONTH(GETDATE()));
 
+SELECT*FROM fn_kv_desviaciones_altas_mes_actual()
+/*
 
+Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como 
+“Alta” en el último mes(ultimos 30 días).*/
+CREATE FUNCTION fn_kv_desviaciones_altas_ultimo_mes()RETURNS TABLEASRETURN(    SELECT         s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal,        di.diferencia_absoluta AS DifAbsoluta,        di.diferencia_porcentual AS DifPorcentual,        di.clasificacion AS Clasificacion    FROM registros_diarios_indicadores rdi    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    INNER JOIN indicadores i ON i.id = rdi.indicador_id    WHERE di.clasificacion = 'Alta'      AND CAST(rdi.fecha_reporte AS DATE) >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE)));SELECT * FROM dbo.fn_kv_desviaciones_altas_ultimo_mes();
 /*
 
 Crear una función de tabla que muestre el historial de indicadores de un sistema fuente específico.
+
 
 ⚙️ PROCEDIMIENTOS ALMACENADOS – Ejercicios Propuestos
 🔹 Inserción y Mantenimiento
