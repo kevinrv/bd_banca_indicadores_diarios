@@ -47,23 +47,61 @@ SELECT DISTINCT unidad_medida FROM indicadores;
 Crear una función que retorne la clasificación de una desviación dado su valor porcentual.*/
 
 SELECT*FROM desviaciones_indicador;
+CREATE FUNCTION fn_ClasificacionDesviacion( @valor_real DECIMAL(9,2), @valor_meta DECIMAL(9,2))RETURNS VARCHAR(255)ASBEGIN    DECLARE @clasificacion VARCHAR(255);    DECLARE @desviacion DECIMAL(9,2);     IF @valor_meta = 0        SET @clasificacion = 'Sin Meta'; -- opcional, evita división por cero    ELSE    BEGIN        SET @desviacion = (ABS(@valor_real - @valor_meta) / @valor_meta) * 100;        SET @clasificacion =            CASE                WHEN @desviacion >= 30 THEN 'Crítica'                WHEN @desviacion >= 20 THEN 'Alta'                WHEN @desviacion >= 10 THEN 'Moderada'                WHEN @desviacion > 0 THEN 'Baja'                ELSE 'Sin Desviación'            END;    END    RETURN @clasificacion;END;
 
-	CASE 
-	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 30 THEN 'Crítica'
-	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 20 THEN 'Alta'
-	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 10 THEN 'Moderada'
-	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100> 0 THEN 'Baja'
-	ELSE 'Sin Desviación' END AS 'clasificacion'
+SELECT dbo.fn_ClasificacionDesviacion(15,100);
+
 /*
 
-Crear una función que indique si un responsable aún está activo (fecha_fin es NULL o mayor a la fecha actual).
+Crear una función que indique si un responsable aún está activo (fecha_fin es NULL o mayor a la fecha actual).*/
+
+CREATE FUNCTION fn_kv_estado_responsable (@responsable_id INT)
+RETURNS VARCHAR(100)
+AS
+BEGIN    DECLARE @estado VARCHAR(20)	DECLARE @fecha_fin DATE	SELECT @fecha_fin = fecha_fin	FROM responsables WHERE id=@responsable_id    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()        SET @estado = 'Activo'    ELSE        SET @estado = 'Inactivo'    RETURN @estadoEND
+SELECT *, dbo.fn_kv_estado_responsable(id) AS estado_responsableFROM responsables;CREATE FUNCTION fn_kv_Responsable_estado (@fecha_fin DATE)RETURNS VARCHAR(20)ASBEGIN    DECLARE @estado VARCHAR(20)    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()        SET @estado = 'Activo'    ELSE        SET @estado = 'Inactivo'    RETURN @estadoENDSELECT *, dbo.fn_kv_Responsable_estado(fecha_fin) AS estado_responsableFROM responsables;
+
+/*
 
 Crear una función que calcule el tiempo total (en minutos) entre hora_inicio y hora_fin de un registro de la tabla horas.
 
 🔹 Funciones de Tabla
-Crear una función de tabla que retorne todos los indicadores registrados para una sucursal específica en una fecha dada.
+Crear una función de tabla que retorne todos los indicadores registrados para una sucursal específica en una fecha dada.*/
 
-Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como “Alta” en el último mes.
+SELECT
+s.id,
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	rdi.fecha_reporte AS 'Fecha'
+FROM sucursales s 
+INNER JOIN registros_diarios_indicadores rdi ON rdi.sucursal_id=s.id
+INNER JOIN indicadores i ON i.id=rdi.indicador_id
+
+
+ALTER FUNCTION fn_kv_indicadores_registrados (@sucursal_id INT, @fecha DATE)
+RETURNS TABLE 
+AS
+RETURN(SELECT
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	rdi.fecha_reporte AS 'Fecha'
+FROM sucursales s 
+INNER JOIN registros_diarios_indicadores rdi ON rdi.sucursal_id=s.id
+INNER JOIN indicadores i ON i.id=rdi.indicador_id
+WHERE s.id=@sucursal_id AND CONVERT(DATE,rdi.fecha_reporte)=@fecha) --SUBSTRING(CAST(rdi.fecha_reporte AS VARCHAR(100)),1,11)=CAST(@fecha AS VARCHAR(100)))
+
+SELECT*FROM dbo.fn_kv_indicadores_registrados(5,'2024-04-26')
+
+
+SELECT CONVERT(DATE,rdi.fecha_reporte,2),SUBSTRING(CAST(rdi.fecha_reporte AS VARCHAR(100)),1,11),fecha_reporte
+FROM registros_diarios_indicadores rdi;
+/*
+
+Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como 
+“Alta” en el último mes.*/
+
+
+/*
 
 Crear una función de tabla que muestre el historial de indicadores de un sistema fuente específico.
 
