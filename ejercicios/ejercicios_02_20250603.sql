@@ -47,7 +47,30 @@ SELECT DISTINCT unidad_medida FROM indicadores;
 Crear una función que retorne la clasificación de una desviación dado su valor porcentual.*/
 
 SELECT*FROM desviaciones_indicador;
-CREATE FUNCTION fn_ClasificacionDesviacion( @valor_real DECIMAL(9,2), @valor_meta DECIMAL(9,2))RETURNS VARCHAR(255)ASBEGIN    DECLARE @clasificacion VARCHAR(255);    DECLARE @desviacion DECIMAL(9,2);     IF @valor_meta = 0        SET @clasificacion = 'Sin Meta'; -- opcional, evita división por cero    ELSE    BEGIN        SET @desviacion = (ABS(@valor_real - @valor_meta) / @valor_meta) * 100;        SET @clasificacion =            CASE                WHEN @desviacion >= 30 THEN 'Crítica'                WHEN @desviacion >= 20 THEN 'Alta'                WHEN @desviacion >= 10 THEN 'Moderada'                WHEN @desviacion > 0 THEN 'Baja'                ELSE 'Sin Desviación'            END;    END    RETURN @clasificacion;END;
+CREATE FUNCTION fn_ClasificacionDesviacion
+( @valor_real DECIMAL(9,2), @valor_meta DECIMAL(9,2))
+RETURNS VARCHAR(255)
+AS
+BEGIN
+    DECLARE @clasificacion VARCHAR(255);
+    DECLARE @desviacion DECIMAL(9,2);
+ 
+    IF @valor_meta = 0
+        SET @clasificacion = 'Sin Meta'; -- opcional, evita división por cero
+    ELSE
+    BEGIN
+        SET @desviacion = (ABS(@valor_real - @valor_meta) / @valor_meta) * 100;
+        SET @clasificacion =
+            CASE
+                WHEN @desviacion >= 30 THEN 'Crítica'
+                WHEN @desviacion >= 20 THEN 'Alta'
+                WHEN @desviacion >= 10 THEN 'Moderada'
+                WHEN @desviacion > 0 THEN 'Baja'
+                ELSE 'Sin Desviación'
+            END;
+    END
+    RETURN @clasificacion;
+END;
 
 SELECT dbo.fn_ClasificacionDesviacion(15,100);
 
@@ -58,8 +81,36 @@ Crear una función que indique si un responsable aún está activo (fecha_fin es
 CREATE FUNCTION fn_kv_estado_responsable (@responsable_id INT)
 RETURNS VARCHAR(100)
 AS
-BEGIN    DECLARE @estado VARCHAR(20)	DECLARE @fecha_fin DATE	SELECT @fecha_fin = fecha_fin	FROM responsables WHERE id=@responsable_id    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()        SET @estado = 'Activo'    ELSE        SET @estado = 'Inactivo'    RETURN @estadoEND
-SELECT *, dbo.fn_kv_estado_responsable(id) AS estado_responsableFROM responsables;CREATE FUNCTION fn_kv_Responsable_estado (@fecha_fin DATE)RETURNS VARCHAR(20)ASBEGIN    DECLARE @estado VARCHAR(20)    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()        SET @estado = 'Activo'    ELSE        SET @estado = 'Inactivo'    RETURN @estadoENDSELECT *, dbo.fn_kv_Responsable_estado(fecha_fin) AS estado_responsableFROM responsables;
+BEGIN
+    DECLARE @estado VARCHAR(20)
+	DECLARE @fecha_fin DATE
+
+	SELECT @fecha_fin = fecha_fin
+	FROM responsables WHERE id=@responsable_id
+
+    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()
+        SET @estado = 'Activo'
+    ELSE
+        SET @estado = 'Inactivo'
+    RETURN @estado
+END
+
+SELECT *, dbo.fn_kv_estado_responsable(id) AS estado_responsable
+FROM responsables;
+
+CREATE FUNCTION fn_kv_Responsable_estado (@fecha_fin DATE)
+RETURNS VARCHAR(20)
+AS
+BEGIN
+    DECLARE @estado VARCHAR(20)
+    IF @fecha_fin IS NULL OR @fecha_fin > GETDATE()
+        SET @estado = 'Activo'
+    ELSE
+        SET @estado = 'Inactivo'
+    RETURN @estado
+END
+SELECT *, dbo.fn_kv_Responsable_estado(fecha_fin) AS estado_responsable
+FROM responsables;
 
 /*
 
@@ -99,31 +150,115 @@ FROM registros_diarios_indicadores rdi;
 
 Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como 
 “Alta” en el último mes(mes actual).*/
-CREATE FUNCTION fn_kv_desviaciones_altas_mes_actual()RETURNS TABLEASRETURN(    SELECT         s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal,        di.diferencia_absoluta AS DifAbsoluta,        di.diferencia_porcentual AS DifPorcentual,        di.clasificacion AS Clasificacion    FROM registros_diarios_indicadores rdi    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    INNER JOIN indicadores i ON i.id = rdi.indicador_id    WHERE di.clasificacion = 'Alta'      AND YEAR(rdi.fecha_reporte) = YEAR(GETDATE()) AND MONTH(rdi.fecha_reporte) = MONTH(GETDATE()));
+CREATE FUNCTION fn_kv_desviaciones_altas_mes_actual()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        s.nombre AS Sucursal,
+        i.nombre AS Indicador,
+        rdi.fecha_reporte AS Fecha,
+        rdi.valor_meta AS ValorMeta,
+        rdi.valor_real AS ValorReal,
+        di.diferencia_absoluta AS DifAbsoluta,
+        di.diferencia_porcentual AS DifPorcentual,
+        di.clasificacion AS Clasificacion
+    FROM registros_diarios_indicadores rdi
+    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id
+    INNER JOIN sucursales s ON s.id = rdi.sucursal_id
+    INNER JOIN indicadores i ON i.id = rdi.indicador_id
+    WHERE di.clasificacion = 'Alta'
+      AND YEAR(rdi.fecha_reporte) = YEAR(GETDATE()) AND MONTH(rdi.fecha_reporte) = MONTH(GETDATE())
+);
 
 SELECT*FROM fn_kv_desviaciones_altas_mes_actual()
 /*
 
 Crear una función de tabla que devuelva los registros diarios de indicadores con desviaciones clasificadas como 
 “Alta” en el último mes(ultimos 30 días).*/
-CREATE FUNCTION fn_kv_desviaciones_altas_ultimo_mes()RETURNS TABLEASRETURN(    SELECT         s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal,        di.diferencia_absoluta AS DifAbsoluta,        di.diferencia_porcentual AS DifPorcentual,        di.clasificacion AS Clasificacion    FROM registros_diarios_indicadores rdi    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    INNER JOIN indicadores i ON i.id = rdi.indicador_id    WHERE di.clasificacion = 'Alta'      AND CAST(rdi.fecha_reporte AS DATE) >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE)));SELECT * FROM dbo.fn_kv_desviaciones_altas_ultimo_mes();
+CREATE FUNCTION fn_kv_desviaciones_altas_ultimo_mes()
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        s.nombre AS Sucursal,
+        i.nombre AS Indicador,
+        rdi.fecha_reporte AS Fecha,
+        rdi.valor_meta AS ValorMeta,
+        rdi.valor_real AS ValorReal,
+        di.diferencia_absoluta AS DifAbsoluta,
+        di.diferencia_porcentual AS DifPorcentual,
+        di.clasificacion AS Clasificacion
+    FROM registros_diarios_indicadores rdi
+    INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id = rdi.id
+    INNER JOIN sucursales s ON s.id = rdi.sucursal_id
+    INNER JOIN indicadores i ON i.id = rdi.indicador_id
+    WHERE di.clasificacion = 'Alta'
+      AND CAST(rdi.fecha_reporte AS DATE) >= DATEADD(DAY, -30, CAST(GETDATE() AS DATE))
+);
+SELECT * FROM dbo.fn_kv_desviaciones_altas_ultimo_mes();
 /*
 
 Crear una función de tabla que muestre el historial de indicadores de un sistema fuente específico.*/
 
 
-CREATE FUNCTION fn_kv_historial_indicadores_por_sistema_fuente(@sistema_fuente_id INT)RETURNS TABLEASRETURN(    SELECT         sf.nombre AS SistemaFuente,        s.nombre AS Sucursal,        i.nombre AS Indicador,        rdi.fecha_reporte AS Fecha,        rdi.valor_meta AS ValorMeta,        rdi.valor_real AS ValorReal    FROM sistemas_fuente sf    INNER JOIN indicadores i ON i.sistema_fuente_id = sf.id    INNER JOIN registros_diarios_indicadores rdi ON rdi.indicador_id = i.id    INNER JOIN sucursales s ON s.id = rdi.sucursal_id    WHERE sf.id = @sistema_fuente_id);SELECT * FROM dbo.fn_kv_historial_indicadores_por_sistema_fuente(3);
+CREATE FUNCTION fn_kv_historial_indicadores_por_sistema_fuente(@sistema_fuente_id INT)
+RETURNS TABLE
+AS
+RETURN
+(
+    SELECT 
+        sf.nombre AS SistemaFuente,
+        s.nombre AS Sucursal,
+        i.nombre AS Indicador,
+        rdi.fecha_reporte AS Fecha,
+        rdi.valor_meta AS ValorMeta,
+        rdi.valor_real AS ValorReal
+    FROM sistemas_fuente sf
+    INNER JOIN indicadores i ON i.sistema_fuente_id = sf.id
+    INNER JOIN registros_diarios_indicadores rdi ON rdi.indicador_id = i.id
+    INNER JOIN sucursales s ON s.id = rdi.sucursal_id
+    WHERE sf.id = @sistema_fuente_id
+);
+SELECT * FROM dbo.fn_kv_historial_indicadores_por_sistema_fuente(3);
 
 
 
 /*
 
 
-
-
 ⚙️ PROCEDIMIENTOS ALMACENADOS – Ejercicios Propuestos
 🔹 Inserción y Mantenimiento
-Crear un procedimiento almacenado que registre un nuevo indicador, validando que el responsable y el sistema fuente existan.
+Crear un procedimiento almacenado que registre un nuevo indicador, validando que el responsable y el sistema fuente existan.*/
+
+CREATE PROCEDURE sp_kv_registrar_indicador
+	@id_responsable INT,
+	@id_sistema_fuente INT,
+	@nombre VARCHAR(255),
+	@descripcion VARCHAR(MAX),
+	@unidad_medida VARCHAR(100),
+	@categoria VARCHAR(100)
+AS 
+	SET NOCOUNT ON;
+
+	IF @id_responsable = (SELECT id FROM responsables WHERE id=@id_responsable)
+		IF @id_sistema_fuente = (SELECT id FROM sistemas_fuente WHERE id=@id_sistema_fuente)
+			INSERT INTO indicadores VALUES(@id_responsable,@id_sistema_fuente,@nombre,@descripcion,@unidad_medida,@categoria);
+		ELSE
+			PRINT 'EL SISTEMA FUENTE NO EXISTE'
+	ELSE
+		PRINT 'EL RESPONSABLE INGRESADO NO EXISTE'
+GO
+
+EXEC dbo.sp_kv_registrar_indicador 2,200,'test1','test 1','Porcentaje','Eficiencia';
+
+
+SELECT*FROM indicadores;
+
+SELECT*FROM sistemas_fuente;
+/*
 
 Crear un procedimiento que permita ingresar un nuevo registro diario de indicador y calcule automáticamente su desviación (insertando en la tabla desviaciones_indicador).
 
