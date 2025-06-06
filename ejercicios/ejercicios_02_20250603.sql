@@ -296,9 +296,26 @@ SELECT*FROM registros_diarios_indicadores;
 SELECT*FROM desviaciones_indicador;
 /*
 
-Crear un procedimiento para actualizar la información de una sucursal (por ejemplo, teléfono y dirección).
+Crear un procedimiento para actualizar la información de una sucursal (por ejemplo, teléfono y dirección).*/
 
-Crear un procedimiento para cambiar el responsable de un sistema fuente.
+
+CREATE PROCEDURE sp_actualizar_sucursal    @id_sucursal INT,    @nueva_direccion VARCHAR(255),    @nuevo_telefono VARCHAR(25)ASBEGIN    SET NOCOUNT ON;    UPDATE sucursales    SET        direccion = @nueva_direccion,        telefono = @nuevo_telefono    WHERE id = @id_sucursal;END;GO
+
+SELECT*FROM sucursales;
+
+EXEC sp_actualizar_sucursal 5,'Av. Los Laureles 456','01-7890135'
+
+/*
+
+Crear un procedimiento para cambiar el responsable de un sistema fuente.*/
+CREATE PROCEDURE sp_cambiar_responsable_sistema_fuente    @id_sistema_fuente INT,    @id_responsable INTASBEGIN    SET NOCOUNT ON;    IF @id_responsable = (SELECT id FROM responsables WHERE id = @id_responsable)    BEGIN        IF @id_sistema_fuente = (SELECT id FROM sistemas_fuente WHERE id = @id_sistema_fuente)        BEGIN            UPDATE sistemas_fuente            SET responsable_id = @id_responsable            WHERE id = @id_sistema_fuente;            PRINT 'Responsable actualizado correctamente.';        END        ELSE        BEGIN            PRINT 'EL SISTEMA FUENTE NO EXISTE';        END    END    ELSE    BEGIN        PRINT 'EL RESPONSABLE INGRESADO NO EXISTE';    ENDEND;GO
+
+
+SELECT*FROM sistemas_fuente;
+
+
+EXEC sp_cambiar_responsable_sistema_fuente 8,11
+/*
 
 🔹 Consultas y Reportes
 Crear un procedimiento que liste todos los indicadores que han superado el 90% de cumplimiento en la última semana.
@@ -309,7 +326,111 @@ Total reportes diarios
 
 Promedio valor_real
 
-Porcentaje promedio de cumplimiento
+Porcentaje promedio de cumplimiento*/
+
+ALTER PROCEDURE sp_kv_resumen_indicadores_sucursal 
+ @sucursal_id INT,
+ @fecha DATE
+AS 
+BEGIN
+	SET NOCOUNT ON;
+	
+	DECLARE @total_reportes_diarios INT;
+	DECLARE @promedio_cumplimiento DECIMAL(9,2);
+	DECLARE @promedio_vr_indice DECIMAL(9,2);
+	DECLARE @promedio_vr_moneda DECIMAL(9,2);
+	DECLARE @promedio_vr_num DECIMAL(9,2);
+	DECLARE @promedio_vr_porcentaje DECIMAL(9,2);
+	DECLARE @promedio_vr_ratio DECIMAL(9,2);
+	DECLARE @promedio_vr_segundos DECIMAL(9,2);
+
+	--Calcular el valor de @total_reportes_diarios
+	SELECT @total_reportes_diarios=COUNT(id)
+	FROM registros_diarios_indicadores
+	WHERE CONVERT(DATE,fecha_reporte)=@fecha AND sucursal_id=@sucursal_id;
+
+	--Calcular el valor de @promedio_cumplimiento
+
+	SELECT @promedio_cumplimiento=AVG((valor_real/valor_meta)*100)
+	FROM registros_diarios_indicadores
+	WHERE CONVERT(DATE,fecha_reporte)=@fecha AND sucursal_id=@sucursal_id;
+
+	-- PROMEDIO VALOR REAL Índice
+
+	SELECT @promedio_vr_indice=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Índice';
+	-- PROMEDIO VALOR REAL Monto (S/.)
+
+	SELECT @promedio_vr_moneda=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Monto (S/.)';
+	-- PROMEDIO VALOR REAL Número
+
+	SELECT @promedio_vr_num=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Número';
+	-- PROMEDIO VALOR REAL Porcentaje
+
+	SELECT @promedio_vr_porcentaje=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Porcentaje';
+	-- PROMEDIO VALOR REAL Ratio
+
+	SELECT @promedio_vr_ratio=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Ratio';
+
+	-- PROMEDIO VALOR REAL Segundos
+	SELECT @promedio_vr_segundos=AVG(rdi.valor_real)
+	FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON i.id=rdi.indicador_id
+	WHERE 
+		CONVERT(DATE,rdi.fecha_reporte)=@fecha AND
+		rdi.sucursal_id=@sucursal_id AND
+		i.unidad_medida='Segundos';
+
+SELECT 
+	@sucursal_id AS 'sucursal_id',
+	@fecha AS 'fecha_analisis',
+	@total_reportes_diarios AS 'total_reportes_diarios',
+	 @promedio_cumplimiento AS 'promedio_cumplimiento',
+	 @promedio_vr_indice AS 'promedio_vr_indice',
+	 @promedio_vr_moneda AS 'promedio_vr_moneda',
+	 @promedio_vr_num AS 'promedio_vr_num',
+	 @promedio_vr_porcentaje AS 'promedio_vr_porcentaje',
+	 @promedio_vr_ratio AS 'promedio_vr_ratio',
+	 @promedio_vr_segundos AS 'promedio_vr_segundos';
+
+END;
+
+
+EXEC dbo.sp_kv_resumen_indicadores_sucursal 1,'2024-11-30';
+
+SELECT*FROM sucursales;
+SELECT*FROM registros_diarios_indicadores;
+SELECT DISTINCT unidad_medida FROM indicadores
+/*
 
 Crear un procedimiento que muestre las desviaciones de un indicador específico en un rango de fechas.
 
