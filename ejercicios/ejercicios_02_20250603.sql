@@ -260,7 +260,41 @@ SELECT*FROM indicadores;
 SELECT*FROM sistemas_fuente;
 /*
 
-Crear un procedimiento que permita ingresar un nuevo registro diario de indicador y calcule automáticamente su desviación (insertando en la tabla desviaciones_indicador).
+Crear un procedimiento que permita ingresar un nuevo registro diario de indicador y calcule automáticamente 
+su desviación (insertando en la tabla desviaciones_indicador).*/
+
+
+ALTER PROCEDURE sp_insertar_registro_diario_con_desviacion    @sucursal_id INT,    @indicador_id INT,    @valor_meta DECIMAL(9,2),    @valor_real DECIMAL(9,2)    AS    SET NOCOUNT ON;	DECLARE @last_rdi_id INT;	IF @sucursal_id = (SELECT id FROM sucursales WHERE id=@sucursal_id)
+		IF @indicador_id = (SELECT id FROM indicadores WHERE id=@indicador_id)			INSERT INTO registros_diarios_indicadores (sucursal_id, indicador_id, valor_meta, valor_real, fecha_reporte)			VALUES (@sucursal_id, @indicador_id, @valor_meta, @valor_real, GETDATE());
+		ELSE
+			PRINT 'EL INDICADOR INGRESADO NO EXISTE'
+	ELSE
+		PRINT 'LA SUCURSAL INGRESADA NO EXISTE'
+	
+	SET @last_rdi_id = (SELECT MAX(id) FROM registros_diarios_indicadores);
+
+	INSERT INTO desviaciones_indicador
+	SELECT
+	id AS 'registro_diario_indicador',
+	ABS(valor_real-valor_meta) AS 'diferencia_absoluta',
+	(ABS(valor_real-valor_meta)/valor_meta)*100 AS 'diferencia_porcentual',
+	CASE 
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 30 THEN 'Crítica'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 20 THEN 'Alta'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100 >= 10 THEN 'Moderada'
+	  WHEN (ABS(valor_real-valor_meta)/valor_meta)*100> 0 THEN 'Baja'
+	ELSE 'Sin Desviación' END AS 'clasificacion'
+	FROM registros_diarios_indicadores
+	WHERE id=@last_rdi_id;
+GO
+
+EXEC dbo.sp_insertar_registro_diario_con_desviacion 1,6,'100000.00','10055'
+
+SELECT*FRom sucursales;
+
+SELECT*FROM registros_diarios_indicadores;
+SELECT*FROM desviaciones_indicador;
+/*
 
 Crear un procedimiento para actualizar la información de una sucursal (por ejemplo, teléfono y dirección).
 
