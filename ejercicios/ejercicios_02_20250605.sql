@@ -117,3 +117,37 @@ DELETE FROM registros_diarios_indicadores WHERE id = '10133'
 
 
 SELECT*FROM registros_diarios_indicadores;
+
+---ejemplo cursor
+
+DECLARE @nombreSucursal NVARCHAR(100);
+DECLARE @id NVARCHAR(100);
+DECLARE @result DATETIME;
+
+-- Declarar el cursor
+DECLARE cursor_sucursales CURSOR FOR
+SELECT id ,nombre FROM sucursales;
+
+-- Abrir el cursor
+OPEN cursor_sucursales;
+
+-- Obtener la primera fila
+FETCH NEXT FROM cursor_sucursales INTO @id, @nombreSucursal;
+
+-- Recorrer todas las filas
+WHILE @@FETCH_STATUS = 0
+BEGIN
+	
+	SET @result=(SELECT MAX(fecha_reporte) FROM registros_diarios_indicadores WHERE sucursal_id=@id)
+
+    PRINT '|Sucursal: ' + @nombreSucursal +'|Fecha de ultimo reporte:' + CONVERT(VARCHAR(255),@result);
+
+	
+
+    -- Siguiente fila
+    FETCH NEXT FROM cursor_sucursales INTO @id, @nombreSucursal;
+END;
+
+-- Cerrar y liberar recursos
+CLOSE cursor_sucursales;
+DEALLOCATE cursor_sucursales;

@@ -288,7 +288,7 @@ ALTER PROCEDURE sp_insertar_registro_diario_con_desviacion    @sucursal_id INT,
 	WHERE id=@last_rdi_id;
 GO
 
-EXEC dbo.sp_insertar_registro_diario_con_desviacion 1,6,'100000.00','10055'
+EXEC dbo.sp_insertar_registro_diario_con_desviacion 8,11,'7880000.00','5265055'
 
 SELECT*FRom sucursales;
 
