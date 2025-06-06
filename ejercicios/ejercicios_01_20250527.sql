@@ -180,20 +180,58 @@ ORDER BY diferencia_absoluta DESC;
 Calcular el porcentaje de cumplimiento (valor_real / valor_meta * 100) de todos los indicadores reportados 
 ayer por cada sucursal.*/
 
-SELECT	s.nombre AS 'Sucursal',	i.nombre AS 'Indicador',	valor_meta,	valor_real,	CONCAT(ROUND((valor_real / valor_meta * 100),2),' %') AS 'porcentaje_cumpliento',	fecha_reporteFROM registros_diarios_indicadores rdi	INNER JOIN sucursales AS s ON rdi.sucursal_id = s.id	INNER JOIN indicadores as i ON rdi.indicador_id = i.idWHERE DATEDIFF(DAY,fecha_reporte,GETDATE())=1ORDER BY s.nombre, i.nombre;
+SELECT
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
+	valor_meta,
+	valor_real,
+	CONCAT(ROUND((valor_real / valor_meta * 100),2),' %') AS 'porcentaje_cumpliento',
+	fecha_reporte
+FROM registros_diarios_indicadores rdi
+	INNER JOIN sucursales AS s ON rdi.sucursal_id = s.id
+	INNER JOIN indicadores as i ON rdi.indicador_id = i.id
+WHERE DATEDIFF(DAY,fecha_reporte,GETDATE())=1
+ORDER BY s.nombre, i.nombre;
 
 /*
 
 
 Mostrar un ranking de sucursales según el total de indicadores reportados en el último mes.*/
 
-SELECT    s.nombre AS 'Sucursal',    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM    registros_diarios_indicadores rdiINNER JOIN    sucursales s ON rdi.sucursal_id = s.idWHERE    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())GROUP BY    s.nombre
+SELECT
+    s.nombre AS 'Sucursal',
+    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'
+FROM
+    registros_diarios_indicadores rdi
+INNER JOIN
+    sucursales s ON rdi.sucursal_id = s.id
+WHERE
+    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())
+GROUP BY
+    s.nombre
 ORDER BY 2 DESC;
 
-SELECT s.nombre AS 'Sucursal',COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM registros_diarios_indicadores rdi	INNER JOIN sucursales s ON rdi.sucursal_id = s.id	WHERE rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())GROUP BY s.nombreORDER BY Total_Indicadores_Reportados DESC;
+SELECT 
+s.nombre AS 'Sucursal',
+COUNT(rdi.id) AS 'Total_Indicadores_Reportados'
+FROM registros_diarios_indicadores rdi
+	INNER JOIN sucursales s ON rdi.sucursal_id = s.id
+	WHERE rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE())
+GROUP BY s.nombre
+ORDER BY Total_Indicadores_Reportados DESC;
 
 --Mostrar un ranking de sucursales que tenga  reportados mas de 20 indicadores en el último mes.*/
-SELECT    s.nombre AS 'Sucursal',    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'FROM    registros_diarios_indicadores rdiINNER JOIN    sucursales s ON rdi.sucursal_id = s.idWHERE    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE()) GROUP BY    s.nombre
+SELECT
+    s.nombre AS 'Sucursal',
+    COUNT(rdi.id) AS 'Total_Indicadores_Reportados'
+FROM
+    registros_diarios_indicadores rdi
+INNER JOIN
+    sucursales s ON rdi.sucursal_id = s.id
+WHERE
+    rdi.fecha_reporte >= DATEADD(DAY, -30, GETDATE()) 
+GROUP BY
+    s.nombre
 HAVING COUNT(rdi.id)>20
 ORDER BY 2 DESC;
 
@@ -202,12 +240,15 @@ ORDER BY 2 DESC;
 Detectar los indicadores cuyo valor real fue menor al valor meta en más del 50% de los días del mes actual.*/
 
 SELECT 
-	s.nombre AS 'Sucursal',	i.nombre AS 'Indicador',
+	s.nombre AS 'Sucursal',
+	i.nombre AS 'Indicador',
 	rdi.valor_real,
 	rdi.valor_meta,
 	rdi.fecha_reporte,
 	100-((rdi.valor_real/rdi.valor_meta)*100) AS 'Menor que el valor meta en un ..%'
-FROM registros_diarios_indicadores rdi	INNER JOIN sucursales s ON rdi.sucursal_id = s.id	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+FROM registros_diarios_indicadores rdi
+	INNER JOIN sucursales s ON rdi.sucursal_id = s.id
+	INNER JOIN indicadores i ON rdi.indicador_id = i.id
 WHERE 
 	MONTH(GETDATE())=MONTH(rdi.fecha_reporte) AND 
 	YEAR(GETDATE())=YEAR(rdi.fecha_reporte) AND 
@@ -273,7 +314,8 @@ Identificar los 5 indicadores más críticos (con mayor cantidad de desviaciones
 SELECT  TOP 5
 	i.nombre AS 'Indicador',
 	COUNT(di.registro_diario_indicador_id) AS 'num_indicadores'
-FROM registros_diarios_indicadores rdi	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON rdi.indicador_id = i.id
 	INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id=rdi.id
 WHERE 
 	di.clasificacion='Crítica' AND
@@ -287,7 +329,8 @@ SELECT
 	i.nombre AS 'Indicador',
 	COUNT(di.registro_diario_indicador_id) AS 'num_indicadores'
 	INTO #t01
-FROM registros_diarios_indicadores rdi	INNER JOIN indicadores i ON rdi.indicador_id = i.id
+FROM registros_diarios_indicadores rdi
+	INNER JOIN indicadores i ON rdi.indicador_id = i.id
 	INNER JOIN desviaciones_indicador di ON di.registro_diario_indicador_id=rdi.id
 WHERE 
 	di.clasificacion='Crítica' AND
